@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>花光亿万富翁的钱</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .money-display {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2ecc71;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .categories {
+            display: flex;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        .category-btn {
+            padding: 8px 15px;
+            margin-right: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .category-btn.active {
+            background-color: #2980b9;
+        }
+        .items-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .item-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .item-card:hover {
+            transform: translateY(-5px);
+        }
+        .item-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .item-price {
+            color: #e74c3c;
+        }
+        .investment-item .item-price {
+            color: #3498db;
+        }
+        .item-category {
+            font-size: 0.8em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .reset-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .history-btn {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background-color: #2ecc71;
+            color: white;
+            border-radius: 5px;
+            display: none;
+        }
+        .portfolio {
+            margin-top: 30px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .portfolio h3 {
+            margin-top: 0;
+        }
+        .portfolio-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .profit {
+            color: #2ecc71;
+        }
+        .loss {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>花光亿万富翁的钱</h1>
+        <p>初始资金: <span id="initial-money">100,000,000,000</span> 元</p>
+    </div>
+    
+    <div class="money-display" id="money-display">
+        剩余: ￥100,000,000,000
+    </div>
+    
+    <div class="categories">
+        <button class="category-btn active" data-category="all">全部</button>
+        <button class="category-btn" data-category="property">房产</button>
+        <button class="category-btn" data-category="vehicle">交通工具</button>
+        <button class="category-btn" data-category="luxury">奢侈品</button>
+        <button class="category-btn" data-category="investment">投资</button>
+        <button class="category-btn" data-category="other">其他</button>
+    </div>
+    
+    <div class="items-container" id="items-container">
+        <!-- 项目将通过JavaScript动态加载 -->
+    </div>
+    
+    <div class="controls">
+        <button class="reset-btn" id="reset-btn">重置游戏</button>
+        <button class="history-btn" id="history-btn">购买历史</button>
+    </div>
+    
+    <div class="portfolio" id="portfolio">
+        <h3>投资组合</h3>
+        <div id="portfolio-items">
+            <p>暂无投资项目</p>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        // 初始资金
+        let money = 100000000000;
+        let initialMoney = money;
+        let purchasedItems = [];
+        let investments = [];
+        
+        // 商品数据
+        const items = [
+            // 房产
+            { id: 1, name: "北京四合院", price: 150000000, category: "property", type: "consumption" },
+            { id: 2, name: "上海汤臣一品豪宅", price: 250000000, category: "property", type: "consumption" },
+            { id: 3, name: "海南私人岛屿", price: 800000000, category: "property", type: "consumption" },
+            { id: 4, name: "香港山顶别墅", price: 1200000000, category: "property", type: "consumption" },
+            
+            // 交通工具
+            { id: 5, name: "劳斯莱斯幻影", price: 8000000, category: "vehicle", type: "consumption" },
+            { id: 6, name: "私人飞机（湾流G650）", price: 450000000, category: "vehicle", type: "consumption" },
+            { id: 7, name: "豪华游艇", price: 600000000, category: "vehicle", type: "consumption" },
+            { id: 8, name: "阿联酋航空A380私人改装", price: 3000000000, category: "vehicle", type: "consumption" },
+            
+            // 奢侈品
+            { id: 9, name: "毕加索名画", price: 150000000, category: "luxury", type: "consumption" },
+            { id: 10, name: "百达翡丽手表", price: 25000000, category: "luxury", type: "consumption" },
+            { id: 11, name: "10克拉粉钻", price: 120000000, category: "luxury", type: "consumption" },
+            { id: 12, name: "明代青花瓷", price: 300000000, category: "luxury", type: "consumption" },
+            
+            // 投资
+            { id: 13, name: "腾讯股票", price: 5000000000, category: "investment", type: "investment", volatility: 0.15 },
+            { id: 14, name: "比特币", price: 3000000000, category: "investment", type: "investment", volatility: 0.3 },
+            { id: 15, name: "初创科技公司", price: 2000000000, category: "investment", type: "investment", volatility: 0.4 },
+            { id: 16, name: "黄金储备", price: 5000000000, category: "investment", type: "investment", volatility: 0.1 },
+            { id: 17, name: "房地产信托基金", price: 3000000000, category: "investment", type: "investment", volatility: 0.2 },
+            
+            // 其他
+            { id: 18, name: "NBA球队", price: 25000000000, category: "other", type: "consumption" },
+            { id: 19, name: "英超足球俱乐部", price: 35000000000, category: "other", type: "consumption" },
+            { id: 20, name: "太空旅行", price: 300000000, category: "other", type: "consumption" },
+            { id: 21, name: "私人火箭发射", price: 5000000000, category: "other", type: "consumption" },
+            { id: 22, name: "小国家一年GDP", price: 100000000000, category: "other", type: "consumption" }
+        ];
+        
+        // DOM元素
+        const moneyDisplay = document.getElementById('money-display');
+        const itemsContainer = document.getElementById('items-container');
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const historyBtn = document.getElementById('history-btn');
+        const notification = document.getElementById('notification');
+        const portfolioItems = document.getElementById('portfolio-items');
+        
+        // 初始化显示商品
+        function displayItems(category = 'all') {
+            itemsContainer.innerHTML = '';
+            
+            const filteredItems = category === 'all' 
+                ? items 
+                : items.filter(item => item.category === category);
+            
+            filteredItems.forEach(item => {
+                const itemCard = document.createElement('div');
+                itemCard.className = `item-card ${item.type === 'investment' ? 'investment-item' : ''}`;
+                
+                itemCard.innerHTML = `
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">价格: ￥${formatMoney(item.price)}</div>
+                    <div class="item-category">${getCategoryName(item.category)}</div>
+                `;
+                
+                itemCard.addEventListener('click', () => purchaseItem(item));
+                itemsContainer.appendChild(itemCard);
+            });
+        }
+        
+        // 购买商品
+        function purchaseItem(item) {
+            if (money < item.price) {
+                showNotification('资金不足！');
+                return;
+            }
+            
+            money -= item.price;
+            updateMoneyDisplay();
+            
+            if (item.type === 'investment') {
+                // 添加到投资组合
+                const investment = {
+                    ...item,
+                    purchasePrice: item.price,
+                    currentValue: item.price,
+                    quantity: 1
+                };
+                
+                // 检查是否已经投资过该商品
+                const existingIndex = investments.findIndex(i => i.id === item.id);
+                if (existingIndex >= 0) {
+                    investments[existingIndex].quantity += 1;
+                    investments[existingIndex].purchasePrice += item.price;
+                    investments[existingIndex].currentValue += item.price;
+                } else {
+                    investments.push(investment);
+                }
+                
+                updatePortfolio();
+                showNotification(`成功投资: ${item.name}`);
+            } else {
+                // 添加到购买历史
+                purchasedItems.push(item);
+                showNotification(`成功购买: ${item.name}`);
+            }
+        }
+        
+        // 更新投资组合
+        function updatePortfolio() {
+            if (investments.length === 0) {
+                portfolioItems.innerHTML = '<p>暂无投资项目</p>';
+                return;
+            }
+            
+            let html = '';
+            let totalInvestment = 0;
+            let totalCurrentValue = 0;
+            
+            investments.forEach(investment => {
+                // 随机波动投资价值
+                const changePercent = (Math.random() * 2 - 1) * investment.volatility;
+                const valueChange = investment.currentValue * changePercent;
+                investment.currentValue += valueChange;
+                
+                totalInvestment += investment.purchasePrice;
+                totalCurrentValue += investment.currentValue;
+                
+                const profit = investment.currentValue - investment.purchasePrice;
+                const profitPercent = (profit / investment.purchasePrice) * 100;
+                
+                html += `
+                    <div class="portfolio-item">
+                        <span>${investment.name} (x${investment.quantity})</span>
+                        <span>
+                            <span>当前: ￥${formatMoney(investment.currentValue)}</span>
+                            <span class="${profit >= 0 ? 'profit' : 'loss'}">
+                                ${profit >= 0 ? '+' : ''}${formatMoney(profit)} (${profitPercent.toFixed(2)}%)
+                            </span>
+                        </span>
+                    </div>
+                `;
+            });
+            
+            const totalProfit = totalCurrentValue - totalInvestment;
+            const totalProfitPercent = (totalProfit / totalInvestment) * 100;
+            
+            html += `
+                <div class="portfolio-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; font-weight: bold;">
+                    <span>总计</span>
+                    <span>
+                        <span>当前: ￥${formatMoney(totalCurrentValue)}</span>
+                        <span class="${totalProfit >= 0 ? 'profit' : 'loss'}">
+                            ${totalProfit >= 0 ? '+' : ''}${formatMoney(totalProfit)} (${totalProfitPercent.toFixed(2)}%)
+                        </span>
+                    </span>
+                </div>
+            `;
+            
+            portfolioItems.innerHTML = html;
+            
+            // 更新总资金（包括投资价值）
+            updateMoneyDisplay();
+        }
+        
+        // 更新资金显示
+        function updateMoneyDisplay() {
+            // 计算投资总价值
+            const investmentsValue = investments.reduce((sum, inv) => sum + inv.currentValue, 0);
+            const cash = money;
+            const total = cash + investmentsValue;
+            
+            moneyDisplay.innerHTML = `
+                剩余现金: ￥${formatMoney(cash)}<br>
+                投资价值: ￥${formatMoney(investmentsValue)}<br>
+                总资产: ￥${formatMoney(total)}
+            `;
+        }
+        
+        // 显示通知
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 格式化金额
+        function formatMoney(amount) {
+            return amount.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+        }
+        
+        // 获取分类名称
+        function getCategoryName(category) {
+            const names = {
+                'property': '房产',
+                'vehicle': '交通工具',
+                'luxury': '奢侈品',
+                'investment': '投资',
+                'other': '其他'
+            };
+            return names[category] || category;
+        }
+        
+        // 重置游戏
+        function resetGame() {
+            money = initialMoney;
+            purchasedItems = [];
+            investments = [];
+            updateMoneyDisplay();
+            displayItems();
+            updatePortfolio();
+            showNotification('游戏已重置！');
+        }
+        
+        // 显示购买历史
+        function showHistory() {
+            if (purchasedItems.length === 0) {
+                showNotification('暂无购买历史');
+                return;
+            }
+            
+            let message = '购买历史:\n';
+            const historyMap = {};
+            
+            purchasedItems.forEach(item => {
+                if (historyMap[item.name]) {
+                    historyMap[item.name].count++;
+                    historyMap[item.name].total += item.price;
+                } else {
+                    historyMap[item.name] = {
+                        count: 1,
+                        total: item.price
+                    };
+                }
+            });
+            
+            for (const [name, data] of Object.entries(historyMap)) {
+                message += `${name} x${data.count} (总价: ￥${formatMoney(data.total)})\n`;
+            }
+            
+            alert(message);
+        }
+        
+        // 初始化
+        function init() {
+            displayItems();
+            updateMoneyDisplay();
+            
+            // 分类按钮事件
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    categoryBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    displayItems(btn.dataset.category);
+                });
+            });
+            
+            // 重置按钮事件
+            resetBtn.addEventListener('click', resetGame);
+            
+            // 历史按钮事件
+            historyBtn.addEventListener('click', showHistory);
+            
+            // 每5秒更新投资价值
+            setInterval(() => {
+                if (investments.length > 0) {
+                    updatePortfolio();
+                }
+            }, 5000);
+        }
+        
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
